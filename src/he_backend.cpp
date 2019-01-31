@@ -217,6 +217,16 @@ void runtime::he::HEBackend::validate_he_call(
   }
 }
 
+void runtime::he::HEBackend::set_role(const std::string& role) {
+  if (role == "SERVER") {
+    m_role = Role::SERVER;
+  } else if (role == "CLIENT") {
+    m_role = Role::CLIENT;
+  } else {
+    throw ngraph_error("Invalid role " + role);
+  }
+}
+
 void runtime::he::HEBackend::clear_function_instance() {
   m_function_map.clear();
 }

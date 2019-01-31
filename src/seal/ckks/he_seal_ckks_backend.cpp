@@ -53,7 +53,6 @@ parse_seal_ckks_config_or_use_default() {
       if (role != "CLIENT" && role != "SERVER") {
         throw ngraph_error("Invalid role " + role);
       }
-      NGRAPH_INFO << "CKKS role " << role;
 
       auto coeff_mod = js.find("coeff_modulus");
       if (coeff_mod != js.end()) {

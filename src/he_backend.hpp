@@ -218,6 +218,8 @@ class HEBackend : public runtime::Backend {
 
   Role get_role() const { return m_role; };
 
+  void set_role(const std::string& role);
+
  private:
   class FunctionInstance {
    public:
