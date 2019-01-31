@@ -95,7 +95,7 @@ add_custom_target(he_seal_bfv_backend ALL DEPENDS he_backend
 
 # TCPIP testing for now
 
-find_package(Boost 1.66)
+find_package(Boost 1.69)
 if(Boost_FOUND)
   include_directories(${Boost_INCLUDE_DIRS})
   add_executable(tcp_client tcpip/client.cpp)

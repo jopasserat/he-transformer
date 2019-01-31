@@ -14,6 +14,13 @@
 # limitations under the License.
 # ******************************************************************************
 
+find_package(Boost 1.69)
+if(Boost_FOUND)
+  include_directories(${Boost_INCLUDE_DIRS})
+else()
+  message(FATAL "Boost not found")
+endif()
+
 include_directories(SYSTEM
     ${GTEST_INCLUDE_DIR}
     ${NGRAPH_INCLUDE_DIR}
@@ -30,6 +37,7 @@ set (SRC
     main.cpp
     test_seal.cpp
     test_util.cpp
+    ../src/tcpip/tcpip_util.cpp
 )
 
 set(ACTIVE_BACKEND_LIST HE_SEAL_BFV HE_SEAL_CKKS)

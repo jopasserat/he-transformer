@@ -17,6 +17,7 @@
 #include "he_backend.hpp"
 #include "ngraph/ngraph.hpp"
 #include "seal/he_seal_backend.hpp"
+#include "tcpip/tcpip_util.hpp"
 #include "test_util.hpp"
 #include "util/all_close.hpp"
 #include "util/ndarray.hpp"
@@ -44,4 +45,36 @@ NGRAPH_TEST(${BACKEND_NAME}, create_server_client) {
       static_cast<runtime::he::he_seal::HESealBackend*>(server_backend.get());
   he_server_backend->set_role("SERVER");
   he_server_backend->set_public_key(public_key);
+}
+
+NGRAPH_TEST(${BACKEND_NAME}, server_send_receive) {
+  NGRAPH_INFO << "Testing server send/receive";
+
+  auto hostname = "localhost";
+  auto port = 1025;
+
+  // server_init(port);
+
+  pid_t childPID = fork();
+  if (childPID < 0) {
+    throw ngraph_error("Fork failed");
+  }
+
+  if (childPID == 0)  // client
+  {
+    NGRAPH_INFO << "client pid";
+    sleep(1);  // Wait until server opened
+  } else {     // server
+    NGRAPH_INFO << "server pid ";
+    sleep(1);
+  }
+
+  /*tcp::socket connect_to_server(const std::string& hostname,
+                                const int32_t port);
+
+  void server_init(const int32_t port);
+
+  void send_data(const tcp::socket& socket, const void* data, int bytes);
+
+  void receive_data(const tcp::socket& socket, void* data, int bytes); */
 }
