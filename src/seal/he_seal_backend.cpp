@@ -65,6 +65,10 @@ void runtime::he::he_seal::HESealBackend::assert_valid_seal_parameter(
     throw ngraph_error(
         "sp.m_evaluation_decomposition_bit_count must be between 1 and 60");
   }
+
+  if (sp->m_role != "CLIENT" && sp->m_role != "SERVER") {
+    throw ngraph_error("Invalid role " + sp->m_role);
+  }
 }
 
 shared_ptr<runtime::he::HECiphertext>

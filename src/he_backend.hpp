@@ -44,6 +44,11 @@ namespace ngraph {
 namespace runtime {
 namespace he {
 class HETensor;
+
+/// @brief whether or not the backend is a SERVER (i.e stores the secret key),
+/// or a client, (i.e. stores only the public key
+enum class Role { SERVER, CLIENT };
+
 class HEBackend : public runtime::Backend {
  public:
   /// @brief Creates ciphertext of unspecified value
@@ -211,6 +216,8 @@ class HEBackend : public runtime::Backend {
   bool batch_data() const { return m_batch_data; };
   bool encrypt_model() const { return m_encrypt_model; };
 
+  Role get_role() const { return m_role; };
+
  private:
   class FunctionInstance {
    public:
@@ -233,6 +240,9 @@ class HEBackend : public runtime::Backend {
       const std::vector<std::shared_ptr<runtime::he::HETensor>>& outputs,
       const std::vector<std::shared_ptr<runtime::he::HETensor>>& inputs,
       FunctionInstance& instance);
+
+ protected:
+  Role m_role;
 };
 }  // namespace he
 }  // namespace runtime

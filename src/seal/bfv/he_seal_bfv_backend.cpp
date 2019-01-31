@@ -53,10 +53,14 @@ parse_seal_bfv_config_or_use_default() {
       uint64_t fractional_encoder_base = js["fractional_encoder_base"];
       uint64_t evaluation_decomposition_bit_count =
           js["evaluation_decomposition_bit_count"];
+      string role = js["Role"];
+      if (role != "CLIENT" && role != "SERVER") {
+        throw ngraph_error("Invalid role " + role);
+      }
 
       NGRAPH_INFO << "Using SEAL BFV config for parameters: " << config_path;
       return runtime::he::he_seal::HESealParameter(
-          scheme_name, poly_modulus_degree, plain_modulus, security_level,
+          scheme_name, role, poly_modulus_degree, plain_modulus, security_level,
           evaluation_decomposition_bit_count,
           fractional_encoder_integer_coeff_count,
           fractional_encoder_fraction_coeff_count, fractional_encoder_base);
@@ -67,14 +71,15 @@ parse_seal_bfv_config_or_use_default() {
   } catch (const exception& e) {
     return runtime::he::he_seal::HESealParameter(
         "HE_SEAL_BFV",  // scheme name
-        4096,           // poly_modulus_degree
-        1 << 10,        // plain_modulus
-        128,            // security_level
-        16,             // evaluation_decomposition_bit_count
-        64,             // fractional_encoder_integer_coeff_count
-        32,             // fractional_encoder_fraction_coeff_count
-        2               // fractional_encoder_base
-        );
+        "CLIENT",
+        4096,     // poly_modulus_degree
+        1 << 10,  // plain_modulus
+        128,      // security_level
+        16,       // evaluation_decomposition_bit_count
+        64,       // fractional_encoder_integer_coeff_count
+        32,       // fractional_encoder_fraction_coeff_count
+        2         // fractional_encoder_base
+    );
   }
 }
 

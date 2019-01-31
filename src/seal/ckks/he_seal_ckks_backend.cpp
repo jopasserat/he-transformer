@@ -16,6 +16,7 @@
 
 #include <limits>
 
+#include "he_backend.hpp"
 #include "he_cipher_tensor.hpp"
 #include "he_plain_tensor.hpp"
 #include "he_tensor.hpp"
@@ -48,6 +49,11 @@ parse_seal_ckks_config_or_use_default() {
       uint64_t security_level = js["security_level"];
       uint64_t evaluation_decomposition_bit_count =
           js["evaluation_decomposition_bit_count"];
+      string role = js["role"];
+      if (role != "CLIENT" && role != "SERVER") {
+        throw ngraph_error("Invalid role " + role);
+      }
+      NGRAPH_INFO << "CKKS role " << role;
 
       auto coeff_mod = js.find("coeff_modulus");
       if (coeff_mod != js.end()) {
@@ -70,23 +76,23 @@ parse_seal_ckks_config_or_use_default() {
             bit_count, coeff_count};
 
         return runtime::he::he_seal::HESealParameter(
-            scheme_name, poly_modulus_degree, security_level,
+            scheme_name, role, poly_modulus_degree, security_level,
             evaluation_decomposition_bit_count, coeff_modulus);
       }
 
       NGRAPH_INFO << "Using SEAL CKKS config for parameters: " << config_path;
       return runtime::he::he_seal::HESealParameter(
-          scheme_name, poly_modulus_degree, security_level,
+          scheme_name, role, poly_modulus_degree, security_level,
           evaluation_decomposition_bit_count);
     } else {
-      NGRAPH_INFO << "Using SEAL CKKS default parameters" << config_path;
-      throw runtime_error("config_path is NULL");
+      throw runtime_error("No config given");
     }
   } catch (const exception& e) {
     NGRAPH_INFO << "Error " << e.what();
     NGRAPH_INFO << "Error using NGRAPH_HE_SEAL_CONFIG. Using default ";
     return runtime::he::he_seal::HESealParameter(
         "HE_SEAL_CKKS",  // scheme name
+        "CLIENT",        // role
         1024,            // poly_modulus_degree
         128,             // security_level
         60,              // evaluation_decomposition_bit_count
@@ -110,6 +116,14 @@ runtime::he::he_seal::HESealCKKSBackend::HESealCKKSBackend(
   m_context = make_seal_context(sp);
   print_seal_context(*m_context);
 
+  if (sp->m_role == "CLIENT") {
+    m_role = Role::CLIENT;
+  } else if (sp->m_role == "SERVER") {
+    m_role = Role::SERVER;
+  } else {
+    throw ngraph_error("Invalid role " + sp->m_role);
+  }
+
   auto m_context_data = m_context->context_data();
 
   // Keygen, encryptor and decryptor
@@ -117,7 +131,10 @@ runtime::he::he_seal::HESealCKKSBackend::HESealCKKSBackend(
   m_relin_keys = make_shared<seal::RelinKeys>(
       m_keygen->relin_keys(sp->m_evaluation_decomposition_bit_count));
   m_public_key = make_shared<seal::PublicKey>(m_keygen->public_key());
-  m_secret_key = make_shared<seal::SecretKey>(m_keygen->secret_key());
+
+  if (get_role() == Role::CLIENT) {
+    m_secret_key = make_shared<seal::SecretKey>(m_keygen->secret_key());
+  }
   m_encryptor = make_shared<seal::Encryptor>(m_context, *m_public_key);
   m_decryptor = make_shared<seal::Decryptor>(m_context, *m_secret_key);
 

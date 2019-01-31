@@ -24,6 +24,7 @@
 #include <stdexcept>
 #include <string>
 
+#include "he_backend.hpp"
 #include "ngraph/log.hpp"
 #include "nlohmann/json.hpp"
 
@@ -36,13 +37,15 @@ class HESealParameter {
   struct CoeffModulus;
 
   // For BFV
-  HESealParameter(std::string scheme_name, std::uint64_t poly_modulus_degree,
+  HESealParameter(std::string scheme_name, std::string role,
+                  std::uint64_t poly_modulus_degree,
                   std::uint64_t plain_modulus, std::uint64_t security_level,
                   std::uint64_t evaluation_decomposition_bit_count,
                   std::uint64_t fractional_encoder_integer_coeff_count,
                   std::uint64_t fractional_encoder_fraction_coeff_count,
                   std::uint64_t fractional_encoder_base)
       : m_scheme_name(scheme_name),
+        m_role(role),
         m_poly_modulus_degree(poly_modulus_degree),
         m_plain_modulus(plain_modulus),
         m_security_level(security_level),
@@ -55,21 +58,25 @@ class HESealParameter {
         m_fractional_encoder_base(fractional_encoder_base) {}
 
   // For CKKS
-  HESealParameter(std::string scheme_name, std::uint64_t poly_modulus_degree,
+  HESealParameter(std::string scheme_name, std::string role,
+                  std::uint64_t poly_modulus_degree,
                   std::uint64_t security_level,
                   std::uint64_t evaluation_decomposition_bit_count)
       : m_scheme_name(scheme_name),
+        m_role(role),
         m_poly_modulus_degree(poly_modulus_degree),
         m_security_level(security_level),
         m_evaluation_decomposition_bit_count(
             evaluation_decomposition_bit_count) {}
 
   // For CKKS
-  HESealParameter(std::string scheme_name, std::uint64_t poly_modulus_degree,
+  HESealParameter(std::string scheme_name, std::string role,
+                  std::uint64_t poly_modulus_degree,
                   std::uint64_t security_level,
                   std::uint64_t evaluation_decomposition_bit_count,
                   CoeffModulus coeff_modulus)
       : m_scheme_name(scheme_name),
+        m_role(role),
         m_poly_modulus_degree(poly_modulus_degree),
         m_security_level(security_level),
         m_evaluation_decomposition_bit_count(
@@ -91,6 +98,9 @@ class HESealParameter {
 
   // For CKKS encoder
   double m_scale;
+
+  // Either "CLIENT" or "SERVER"
+  std::string m_role;
 
   // Size and number of coefficient modulus.
   typedef struct CoeffModulus {
