@@ -92,3 +92,14 @@ add_custom_target(he_seal_bfv_backend ALL DEPENDS he_backend
     COMMAND ${CMAKE_COMMAND} -E create_symlink
         ${EXTERNAL_INSTALL_LIB_DIR}/${CMAKE_SHARED_LIBRARY_PREFIX}he_backend${CMAKE_SHARED_LIBRARY_SUFFIX}
         ${NGRAPH_TF_VENV_LIB_DIR}/${CMAKE_SHARED_LIBRARY_PREFIX}he_seal_bfv_backend${CMAKE_SHARED_LIBRARY_SUFFIX})
+
+# TCPIP testing for now
+
+find_package(Boost 1.66)
+if(Boost_FOUND)
+  include_directories(${Boost_INCLUDE_DIRS})
+  add_executable(tcp_client tcpip/client.cpp)
+  add_executable(tcp_server tcpip/server.cpp)
+else()
+  message(FATAL "Boost not found")
+endif()
