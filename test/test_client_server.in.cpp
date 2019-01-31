@@ -47,34 +47,54 @@ NGRAPH_TEST(${BACKEND_NAME}, create_server_client) {
   he_server_backend->set_public_key(public_key);
 }
 
-NGRAPH_TEST(${BACKEND_NAME}, server_send_receive) {
+NGRAPH_TEST(${BACKEND_NAME}, server_test) {
   NGRAPH_INFO << "Testing server send/receive";
 
   auto hostname = "localhost";
-  auto port = 1025;
+  const size_t port = 33000;
 
-  // server_init(port);
+  server_init((int)port);
+}
+
+NGRAPH_TEST(${BACKEND_NAME}, client_test) {
+  NGRAPH_INFO << "Testing server send/receive";
+
+  auto hostname = "localhost";
+  auto port = 33000;
+
+  connect_to_server(hostname, port);
+
+  NGRAPH_INFO << "client test okay";
+}
+
+NGRAPH_TEST(${BACKEND_NAME}, server_and_client_test) {
+  NGRAPH_INFO << "Testing server send/receive";
+
+  auto hostname = "localhost";
+  auto port = 33000;
 
   pid_t childPID = fork();
   if (childPID < 0) {
     throw ngraph_error("Fork failed");
   }
 
-  if (childPID == 0)  // client
+  if (childPID > 0)  // server
   {
-    NGRAPH_INFO << "client pid";
-    sleep(1);  // Wait until server opened
-  } else {     // server
     NGRAPH_INFO << "server pid ";
-    sleep(1);
+    server_init(port);
+    NGRAPH_INFO << "server started ";
+
+    exit(1);
+
+  } else {  // client
+
+    sleep(1);  // Wait until server opened
+    NGRAPH_INFO << "client pid";
+
+    connect_to_server(hostname, port);
+
+    NGRAPH_INFO << "Connected to server";
+
+    exit(1);
   }
-
-  /*tcp::socket connect_to_server(const std::string& hostname,
-                                const int32_t port);
-
-  void server_init(const int32_t port);
-
-  void send_data(const tcp::socket& socket, const void* data, int bytes);
-
-  void receive_data(const tcp::socket& socket, void* data, int bytes); */
 }

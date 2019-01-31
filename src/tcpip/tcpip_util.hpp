@@ -23,10 +23,10 @@ using boost::asio::ip::tcp;
 
 // Connects to server at given hostname / port
 // Returns socket of connection
-tcp::socket connect_to_server(const std::string& hostname, const int32_t port);
+void connect_to_server(const std::string& hostname, const int32_t port);
 
 // Initializes a server at given port
-void server_init(const int32_t port);
+void server_init(const int port);
 
 // Sends data to socket
 // @param socket socket at which server is listening

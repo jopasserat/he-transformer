@@ -25,7 +25,7 @@ int main() {
   try {
     boost::asio::io_context io_context;
 
-    auto port = 1025;
+    auto port = 33000;
 
     tcp::acceptor acceptor(io_context, tcp::endpoint(tcp::v4(), port));
 
@@ -33,10 +33,11 @@ int main() {
       tcp::socket socket(io_context);
       acceptor.accept(socket);
 
-      std::string message = make_daytime_string();
+      /*std::string message = make_daytime_string();
 
       boost::system::error_code ignored_error;
       boost::asio::write(socket, boost::asio::buffer(message), ignored_error);
+    */
     }
   } catch (std::exception& e) {
     std::cerr << e.what() << std::endl;

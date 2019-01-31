@@ -21,26 +21,50 @@ using boost::asio::ip::tcp;
 
 // Connects to server at given hostname / port
 // Returns socket of connection
-tcp::socket connect_to_server(const std::string& hostname, const int32_t port) {
-  std::cout << "Connecting to " << hostname << ":" << port << std::endl;
+void connect_to_server(const std::string& hostname, const int32_t port) {
   boost::asio::io_context io_context;
+
+  char* str_port = "33000";
+
   tcp::resolver resolver(io_context);
-  std::string port_str = std::to_string(port);
-  tcp::resolver::results_type endpoints = resolver.resolve(hostname, port_str);
+  tcp::resolver::results_type endpoints =
+      resolver.resolve("localhost", str_port);
+
   tcp::socket socket(io_context);
   boost::asio::connect(socket, endpoints);
 
-  std::cout << "Connected to " << hostname << ":" << port_str << std::endl;
+  std::cout << "Connected" << std::endl;
 
-  return socket;
+  /*
+    std::cout << "Connecting to " << hostname << ":" << port << std::endl;
+    boost::asio::io_context io_context;
+    tcp::resolver resolver(io_context);
+    std::string port_str = std::to_string(port);
+    std::cout << "port str" << port_str << std::endl;
+    tcp::resolver::results_type endpoints = resolver.resolve("localhost",
+    "1025"); std::cout << "endpoints okay" << std::endl; tcp::socket
+    socket(io_context); std::cout << "socket okay" << std::endl;
+    boost::asio::connect(socket, endpoints);
+
+    std::cout << "Connected to " << hostname << ":" << port_str << std::endl;
+  */
+  return;
 }
 
 // Initializes a server at given port
-void server_init(const int32_t port) {
+void server_init(const int port) {
+  std::cout << "Initializing server at port WTF?! " << port << std::endl;
+  std::cout << port << std::endl;
+
   try {
     boost::asio::io_context io_context;
     tcp::acceptor acceptor(io_context, tcp::endpoint(tcp::v4(), port));
     std::cout << "Server initialized" << std::endl;
+
+    for (;;) {
+      tcp::socket socket(io_context);
+      acceptor.accept(socket);
+    }
 
   } catch (std::exception& e) {
     std::cerr << e.what() << std::endl;
