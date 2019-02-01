@@ -26,7 +26,7 @@ using boost::asio::ip::tcp;
 void connect_to_server(const std::string& hostname, const int32_t port);
 
 // Initializes a server at given port
-void server_init(const int port);
+void server_init(const int port, const int conn_limit = 100);
 
 // Sends data to socket
 // @param socket socket at which server is listening

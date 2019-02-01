@@ -29,7 +29,7 @@ int main() {
 
     tcp::acceptor acceptor(io_context, tcp::endpoint(tcp::v4(), port));
 
-    for (;;) {
+    /*for (;;) {
       tcp::socket socket(io_context);
       acceptor.accept(socket);
 
@@ -38,7 +38,7 @@ int main() {
       boost::system::error_code ignored_error;
       boost::asio::write(socket, boost::asio::buffer(message), ignored_error);
     */
-    }
+    //}
   } catch (std::exception& e) {
     std::cerr << e.what() << std::endl;
   }

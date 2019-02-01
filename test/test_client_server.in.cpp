@@ -14,6 +14,9 @@
 // limitations under the License.
 //*****************************************************************************
 
+#include <signal.h>
+#include <sys/types.h>
+
 #include "he_backend.hpp"
 #include "ngraph/ngraph.hpp"
 #include "seal/he_seal_backend.hpp"
@@ -81,8 +84,11 @@ NGRAPH_TEST(${BACKEND_NAME}, server_and_client_test) {
   if (childPID > 0)  // server
   {
     NGRAPH_INFO << "server pid ";
-    server_init(port);
+    server_init(port, 2);
     NGRAPH_INFO << "server started ";
+
+    sleep(1);
+    kill(childPID, SIGTERM);
 
     exit(1);
 
@@ -94,7 +100,10 @@ NGRAPH_TEST(${BACKEND_NAME}, server_and_client_test) {
     connect_to_server(hostname, port);
 
     NGRAPH_INFO << "Connected to server";
+    connect_to_server(hostname, port);
+    NGRAPH_INFO << "Connected to server again";
 
-    exit(1);
+    return;
   }
+  NGRAPH_INFO << "Reached end of test";
 }

@@ -52,16 +52,18 @@ void connect_to_server(const std::string& hostname, const int32_t port) {
 }
 
 // Initializes a server at given port
-void server_init(const int port) {
+void server_init(const int port, const int conn_limit) {
   std::cout << "Initializing server at port WTF?! " << port << std::endl;
   std::cout << port << std::endl;
 
   try {
     boost::asio::io_context io_context;
     tcp::acceptor acceptor(io_context, tcp::endpoint(tcp::v4(), port));
-    std::cout << "Server initialized" << std::endl;
+    std::cout << "Server initialized with up to " << conn_limit
+              << " connections" << std::endl;
 
-    for (;;) {
+    for (int i = 0; i < conn_limit; ++i) {
+      std::cout << "i " << i << std::endl;
       tcp::socket socket(io_context);
       acceptor.accept(socket);
     }
