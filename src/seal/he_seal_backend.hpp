@@ -124,7 +124,7 @@ class HESealBackend : public HEBackend {
   /// @brief connects to server at hostname:port
   void connect_to_server(const std::string& hostname, const size_t port);
 
-  void he_session(tcp::socket sock);
+  void he_session(tcp::socket& sock);
 
   // Initializes server at given port
   void server_init(const size_t port, const size_t connection_limit = 100);

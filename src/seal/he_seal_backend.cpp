@@ -125,44 +125,33 @@ void runtime::he::he_seal::HESealBackend::server_init(
     const size_t port, const size_t connection_limit) {
   NGRAPH_INFO << "Initializing HE server at port " << port << " limit "
               << connection_limit;
+
+  const int max_length = 66000;
+  const int PUBLIC_KEY_LENGTH = 65609;  // TODO: better message-passing protocol
+  const int DONE_LENGTH = 4;
+
   try {
     boost::asio::io_context io_context;
     tcp::acceptor acceptor(io_context, tcp::endpoint(tcp::v4(), port));
 
+    tcp::socket socket(io_context);
+    acceptor.accept(socket);
+
     for (size_t i = 0; i < connection_limit; ++i) {
       NGRAPH_INFO << "Starting accept thread " << i;
-      std::thread(&runtime::he::he_seal::HESealBackend::he_session, this,
-                  acceptor.accept())
-          .detach();
-    }
 
-  } catch (std::exception& e) {
-    std::cerr << e.what() << std::endl;
-  }
-}
-
-// Reads data from socket, and writes it back
-void runtime::he::he_seal::HESealBackend::he_session(tcp::socket sock) {
-  const int max_length = 66000;
-  const int PUBLIC_KEY_LENGTH = 65609;  // TODO: better message-passing protocol
-  try {
-    size_t num_messages = 1;
-    for (size_t i = 0; i < num_messages; ++i) {
+      NGRAPH_INFO << "Created socket";
       char data[max_length];
 
       boost::system::error_code error;
       boost::asio::streambuf response;
 
-      /*  boost::asio::streambuf b;
-       boost::asio::streambuf::mutable_buffers_type bufs =
-           b.prepare(PUBLIC_KEY_LENGTH);
-       size_t length = sock.receive(bufs); */
-
-      // size_t length = sock.read_some(response, error);
-      size_t length = sock.read_some(boost::asio::buffer(data), error);
+      size_t length = socket.read_some(boost::asio::buffer(data), error);
       if (error == boost::asio::error::eof) {
+        NGRAPH_INFO << "Connection closed by peer";
         break;  // Connection closed cleanly by peer.
       } else if (error) {
+        NGRAPH_INFO << "Some error";
         throw boost::system::system_error(error);  // Some other error.
       }
 
@@ -170,6 +159,9 @@ void runtime::he::he_seal::HESealBackend::he_session(tcp::socket sock) {
 
       if (length == PUBLIC_KEY_LENGTH) {
         NGRAPH_INFO << "Got public key";
+
+        NGRAPH_INFO << "PK server before at " << i << " "
+                    << m_public_key->data()[i];
 
         stringstream stream(string(data, length));
 
@@ -179,15 +171,25 @@ void runtime::he::he_seal::HESealBackend::he_session(tcp::socket sock) {
         NGRAPH_INFO << "Overwrote public key";
 
         NGRAPH_INFO << "PK count " << m_public_key->data().uint64_count();
-      }
+        for (auto i = 0; i < 3; ++i) {
+          NGRAPH_INFO << "PK server after at " << i << " "
+                      << m_public_key->data()[i];
+        }
 
-      // boost::asio::write(sock, boost::asio::buffer(data, length));
+        assert(get_role() == Role::SERVER);
+      } else if (length == DONE_LENGTH) {
+        NGRAPH_INFO << "Received closing string; Closing server";
+        break;
+      }
     }
+    NGRAPH_INFO << "Finished session";
   } catch (std::exception& e) {
-    std::cerr << "Exception in thread: " << e.what() << "\n";
+    std::cerr << e.what() << std::endl;
   }
-  NGRAPH_INFO << "Finished session";
 }
+
+// Reads data from socket, and writes it back
+void runtime::he::he_seal::HESealBackend::he_session(tcp::socket& sock) {}
 
 void runtime::he::he_seal::HESealBackend::connect_to_server(
     const string& hostname, const size_t port) {

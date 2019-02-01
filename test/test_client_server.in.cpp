@@ -36,37 +36,41 @@ NGRAPH_TEST(${BACKEND_NAME}, create_server_client) {
   auto hostname = "localhost";
   auto port = 33000;
 
-  pid_t childPID = fork();
-  if (childPID < 0) {
-    throw ngraph_error("Fork failed");
-  }
+  seal::PublicKey pk_server;
+  seal::PublicKey pk_client;
 
-  seal::PublicKey pk_client, pk_server;
-
-  runtime::he::he_seal::HESealBackend* he_server_backend;
-
-  if (childPID > 0)  // server
-  {
+  auto server_fun = [hostname, port, &pk_server]() {
     auto server_backend = runtime::Backend::create("${BACKEND_NAME}");
+    runtime::he::he_seal::HESealBackend* he_server_backend;
+
     he_server_backend =
         static_cast<runtime::he::he_seal::HESealBackend*>(server_backend.get());
+
+    seal::PublicKey pk_server_init = *he_server_backend->get_public_key();
+    auto cnt_init = pk_server_init.data().uint64_count();
+    NGRAPH_INFO << "pk size_init " << cnt_init;
+    NGRAPH_INFO << "pk_server_init data[0] = "
+                << pk_server_init.data().data()[0];
+
     he_server_backend->set_role("SERVER");
     // he_server_backend->set_public_key(public_key);
-    he_server_backend->server_init(port, 1);
+    he_server_backend->server_init(port, 3);
 
-    NGRAPH_INFO << "Finished server init";
+    NGRAPH_INFO << "Server closed";
     NGRAPH_INFO << "Getting server pk...";
     // auto tmp = he_server_backend->get_secret_key();
     pk_server = *he_server_backend->get_public_key();
     NGRAPH_INFO << "Got server pk!!";
+    auto cnt = pk_server.data().uint64_count();
+    NGRAPH_INFO << "pk size " << cnt;
+    NGRAPH_INFO << "pk_server data[0] = " << pk_server.data().data()[0];
+  };
 
-    sleep(3);  // Wait until client finished sending key
-
-  } else {  // client
-
+  auto client_fun = [hostname, port, &pk_client]() {
     auto client_backend = runtime::Backend::create("${BACKEND_NAME}");
     auto he_client_backend =
         static_cast<runtime::he::he_seal::HESealBackend*>(client_backend.get());
+    he_client_backend->set_role("CLIENT");
 
     pk_client = *he_client_backend->get_public_key();
 
@@ -78,17 +82,24 @@ NGRAPH_TEST(${BACKEND_NAME}, create_server_client) {
 
     NGRAPH_INFO << "pk size " << public_key_str.size();
 
+    // sleep(3);  // Wait until server initialized.
+
     auto socket = runtime::he::network::connect_to_server(hostname, port);
 
     runtime::he::network::send_data(socket, public_key_str);
 
-    // he_client_backend->send_public_key(socket, public_key_stream);
+    //  sleep(1);
 
-    // NGRAPH_INFO << "Sending public key";
-    // send_data(socket, public_key_str);
+    runtime::he::network::send_data(socket, "DONE");
+  };
 
-    // NGRAPH_INFO << "Public key " << public_key_str;
-  }
+  // Run server and client
+  std::thread t1(server_fun);
+  std::thread t2(client_fun);
+
+  // Wait until threads are done
+  t1.join();
+  t2.join();
 
   // Check keys are qual
   NGRAPH_INFO << "asserting eq";
