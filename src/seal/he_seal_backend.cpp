@@ -146,7 +146,8 @@ void runtime::he::he_seal::HESealBackend::he_session(tcp::socket sock) {
   const int max_length = 66000;
   const int PUBLIC_KEY_LENGTH = 65609;  // TODO: better message-passing protocol
   try {
-    for (;;) {
+    size_t num_messages = 1;
+    for (size_t i = 0; i < num_messages; ++i) {
       char data[max_length];
 
       boost::system::error_code error;
@@ -172,15 +173,6 @@ void runtime::he::he_seal::HESealBackend::he_session(tcp::socket sock) {
 
         stringstream stream(string(data, length));
 
-        /*streambuf::const_buffers_type bufs = b.data();
-        std::string s(buffers_begin(bufs), b.size());
-
-        assert(bufs.size() == PUBLIC_KEY_LENGTH);
-        string s(buffer_cast<const char*>(bufs.data()), bufs.size());
-        stringstream stream(s);
-
-        assert(stream.str().size() == PUBLIC_KEY_LENGTH); */
-
         NGRAPH_INFO << "Loaded public key to stream";
 
         m_public_key->load(m_context, stream);
@@ -194,6 +186,7 @@ void runtime::he::he_seal::HESealBackend::he_session(tcp::socket sock) {
   } catch (std::exception& e) {
     std::cerr << "Exception in thread: " << e.what() << "\n";
   }
+  NGRAPH_INFO << "Finished session";
 }
 
 void runtime::he::he_seal::HESealBackend::connect_to_server(

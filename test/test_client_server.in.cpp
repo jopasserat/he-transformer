@@ -52,10 +52,17 @@ NGRAPH_TEST(${BACKEND_NAME}, create_server_client) {
         static_cast<runtime::he::he_seal::HESealBackend*>(server_backend.get());
     he_server_backend->set_role("SERVER");
     // he_server_backend->set_public_key(public_key);
-    he_server_backend->server_init(port, 2);
+    he_server_backend->server_init(port, 1);
+
+    NGRAPH_INFO << "Finished server init";
+    NGRAPH_INFO << "Getting server pk...";
+    // auto tmp = he_server_backend->get_secret_key();
+    pk_server = *he_server_backend->get_public_key();
+    NGRAPH_INFO << "Got server pk!!";
 
     sleep(3);  // Wait until client finished sending key
-  } else {     // client
+
+  } else {  // client
 
     auto client_backend = runtime::Backend::create("${BACKEND_NAME}");
     auto he_client_backend =
@@ -81,14 +88,14 @@ NGRAPH_TEST(${BACKEND_NAME}, create_server_client) {
     // send_data(socket, public_key_str);
 
     // NGRAPH_INFO << "Public key " << public_key_str;
-    NGRAPH_INFO << "Getting server pk...";
-    // auto tmp = he_server_backend->get_secret_key();
-    pk_server = *he_server_backend->get_public_key();
-    NGRAPH_INFO << "Got server pk";
   }
 
   // Check keys are qual
+  NGRAPH_INFO << "asserting eq";
+  auto cnt = pk_client.data().uint64_count();
+  NGRAPH_INFO << "cnt " << cnt;
   ASSERT_EQ(pk_client.data().uint64_count(), pk_server.data().uint64_count());
+  NGRAPH_INFO << "asserteed eq";
 
   for (size_t i = 0; i < pk_client.data().uint64_count(); i++) {
     ASSERT_EQ(pk_client.data().data()[i], pk_server.data().data()[i]);
