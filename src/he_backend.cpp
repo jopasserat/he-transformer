@@ -53,11 +53,19 @@
 #include "ngraph/pass/assign_layout.hpp"
 #include "ngraph/pass/manager.hpp"
 #include "ngraph/pass/visualize_tree.hpp"
+#include "tcpip/tcpip_util.hpp"
 
 using namespace ngraph;
 using namespace std;
 
 using descriptor::layout::DenseTensorLayout;
+
+void runtime::he::HEBackend::server_init(const size_t port,
+                                         const size_t connection_limit) {
+  NGRAPH_INFO << "Initializing HE server at port " << port << " limit "
+              << connection_limit;
+  he::network::server_init(port, connection_limit);
+}
 
 shared_ptr<runtime::he::HEPlaintext>
 runtime::he::HEBackend::create_valued_plaintext(

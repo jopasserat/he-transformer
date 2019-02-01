@@ -21,12 +21,17 @@
 #include <iostream>
 using boost::asio::ip::tcp;
 
+namespace ngraph {
+namespace runtime {
+namespace he {
+namespace network {
+
 // Connects to server at given hostname / port
 // Returns socket of connection
-void connect_to_server(const std::string& hostname, const int32_t port);
+tcp::socket connect_to_server(const std::string& hostname, const size_t port);
 
 // Initializes a server at given port
-void server_init(const int port, const int conn_limit = 100);
+void server_init(const size_t port, const size_t conn_limit = 100);
 
 // Sends data to socket
 // @param socket socket at which server is listening
@@ -38,3 +43,13 @@ void send_data(tcp::socket& socket, const std::string& data);
 // @param socker socker at which we receive data from
 // @return numbers of bytes of data received
 void receive_data(tcp::socket& socket, void* data);
+
+void session(tcp::socket sock);
+
+// Closes connection at given socket
+void close_socket(tcp::socket sock);
+
+}  // namespace network
+}  // namespace he
+}  // namespace runtime
+}  // namespace ngraph

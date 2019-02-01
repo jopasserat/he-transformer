@@ -17,44 +17,59 @@
 #include <boost/array.hpp>
 #include <boost/asio.hpp>
 #include <iostream>
+
+#include "ngraph/ngraph.hpp"
+#include "tcpip/tcpip_util.hpp"
+
 using boost::asio::ip::tcp;
+using namespace ngraph;
 
 // Connects to server at given hostname / port
 // Returns socket of connection
-void connect_to_server(const std::string& hostname, const int32_t port) {
+tcp::socket runtime::he::network::connect_to_server(const std::string& hostname,
+                                                    const size_t port) {
   boost::asio::io_context io_context;
+  std::string str_port = std::to_string(port);
 
-  char* str_port = "33000";
+  std::cout << "Connecting to server at " << hostname << ":" << port
+            << std::endl;
 
   tcp::resolver resolver(io_context);
-  tcp::resolver::results_type endpoints =
-      resolver.resolve("localhost", str_port);
-
+  tcp::resolver::results_type endpoints = resolver.resolve(hostname, str_port);
   tcp::socket socket(io_context);
   boost::asio::connect(socket, endpoints);
 
   std::cout << "Connected" << std::endl;
+  return socket;
+}
 
-  /*
-    std::cout << "Connecting to " << hostname << ":" << port << std::endl;
-    boost::asio::io_context io_context;
-    tcp::resolver resolver(io_context);
-    std::string port_str = std::to_string(port);
-    std::cout << "port str" << port_str << std::endl;
-    tcp::resolver::results_type endpoints = resolver.resolve("localhost",
-    "1025"); std::cout << "endpoints okay" << std::endl; tcp::socket
-    socket(io_context); std::cout << "socket okay" << std::endl;
-    boost::asio::connect(socket, endpoints);
+// Reads data from socket, and writes it back
+void runtime::he::network::session(tcp::socket sock) {
+  const int max_length = 1024;
+  try {
+    for (;;) {
+      char data[max_length];
 
-    std::cout << "Connected to " << hostname << ":" << port_str << std::endl;
-  */
-  return;
+      boost::system::error_code error;
+      size_t length = sock.read_some(boost::asio::buffer(data), error);
+      if (error == boost::asio::error::eof)
+        break;  // Connection closed cleanly by peer.
+      else if (error)
+        throw boost::system::system_error(error);  // Some other error.
+
+      std::cout << "Server got message length " << length << std::endl;
+
+      boost::asio::write(sock, boost::asio::buffer(data, length));
+    }
+  } catch (std::exception& e) {
+    std::cerr << "Exception in thread: " << e.what() << "\n";
+  }
 }
 
 // Initializes a server at given port
-void server_init(const int port, const int conn_limit) {
-  std::cout << "Initializing server at port WTF?! " << port << std::endl;
-  std::cout << port << std::endl;
+void runtime::he::network::server_init(const size_t port,
+                                       const size_t conn_limit) {
+  std::cout << "Initializing server at port " << port << std::endl;
 
   try {
     boost::asio::io_context io_context;
@@ -63,9 +78,8 @@ void server_init(const int port, const int conn_limit) {
               << " connections" << std::endl;
 
     for (int i = 0; i < conn_limit; ++i) {
-      std::cout << "i " << i << std::endl;
-      tcp::socket socket(io_context);
-      acceptor.accept(socket);
+      std::cout << "Starting accept thread " << i << std::endl;
+      std::thread(session, acceptor.accept()).detach();
     }
 
   } catch (std::exception& e) {
@@ -77,25 +91,24 @@ void server_init(const int port, const int conn_limit) {
 // @param socket socket at which server is listening
 // @param data data to send
 // @param bytes number of bytes in data to send
-void send_data(tcp::socket& socket, const std::string& data) {
+void runtime::he::network::send_data(tcp::socket& socket,
+                                     const std::string& data) {
   std::cout << "Sending message: " << data << std::endl;
   boost::system::error_code ignored_error;
   boost::asio::write(socket, boost::asio::buffer(data), ignored_error);
-  std::cout << "Sent message: " << data;
+  std::cout << "Sent message: " << data << std::endl;
 }
 
 // Receives data
 // @param socker socker at which we receive data from
 // @return numbers of bytes of data received
-void receive_data(tcp::socket& socket, void* data) {
-  std::cout << "Receiving data";
-
+void runtime::he::network::receive_data(tcp::socket& socket, void* data) {
   boost::array<char, 128> buf;
   boost::system::error_code error;
 
   size_t len = socket.read_some(boost::asio::buffer(buf), error);
 
-  std::cout << "got " << len << " data" << std::endl;
+  std::cout << "Socket received " << len << " bytes of data" << std::endl;
 
   if (error == boost::asio::error::eof) {
     std::cerr << "Connected closed!";
@@ -103,7 +116,8 @@ void receive_data(tcp::socket& socket, void* data) {
   } else if (error) {
     throw boost::system::system_error(error);  // Some other error.
   }
-  std::cout << "Got data " << buf.size() << std::endl;
+  std::cout << "Data is " << buf.data() << std::endl;
+  std::cout << "Got data size " << buf.size() << std::endl;
 
   return;  // -1;  // buf.size();
 }

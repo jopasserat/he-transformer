@@ -33,46 +33,6 @@ using namespace ngraph;
 static string s_manifest = "${MANIFEST}";
 
 NGRAPH_TEST(${BACKEND_NAME}, create_server_client) {
-  auto client_backend = runtime::Backend::create("${BACKEND_NAME}");
-  auto he_client_backend =
-      static_cast<runtime::he::he_seal::HESealBackend*>(client_backend.get());
-
-  auto context = he_client_backend->get_context();
-
-  auto public_key = he_client_backend->get_public_key();
-
-  NGRAPH_INFO << "Public key " << public_key;
-
-  auto server_backend = runtime::Backend::create("${BACKEND_NAME}");
-  auto he_server_backend =
-      static_cast<runtime::he::he_seal::HESealBackend*>(server_backend.get());
-  he_server_backend->set_role("SERVER");
-  he_server_backend->set_public_key(public_key);
-}
-
-NGRAPH_TEST(${BACKEND_NAME}, server_test) {
-  NGRAPH_INFO << "Testing server send/receive";
-
-  auto hostname = "localhost";
-  const size_t port = 33000;
-
-  server_init((int)port);
-}
-
-NGRAPH_TEST(${BACKEND_NAME}, client_test) {
-  NGRAPH_INFO << "Testing server send/receive";
-
-  auto hostname = "localhost";
-  auto port = 33000;
-
-  connect_to_server(hostname, port);
-
-  NGRAPH_INFO << "client test okay";
-}
-
-NGRAPH_TEST(${BACKEND_NAME}, server_and_client_test) {
-  NGRAPH_INFO << "Testing server send/receive";
-
   auto hostname = "localhost";
   auto port = 33000;
 
@@ -83,25 +43,64 @@ NGRAPH_TEST(${BACKEND_NAME}, server_and_client_test) {
 
   if (childPID > 0)  // server
   {
-    NGRAPH_INFO << "server pid ";
-    server_init(port, 2);
-    NGRAPH_INFO << "server started ";
+    auto server_backend = runtime::Backend::create("${BACKEND_NAME}");
+    auto he_server_backend =
+        static_cast<runtime::he::he_seal::HESealBackend*>(server_backend.get());
+    he_server_backend->set_role("SERVER");
+    // he_server_backend->set_public_key(public_key);
+    he_server_backend->server_init(port, 2);
 
-    sleep(1);
-    kill(childPID, SIGTERM);
+    std::shared_ptr<seal::PublicKey> public_key;
 
-    exit(1);
+    sleep(2);  // Wait until client finished its connections
+  } else {     // client
 
-  } else {  // client
+    auto client_backend = runtime::Backend::create("${BACKEND_NAME}");
+    auto he_client_backend =
+        static_cast<runtime::he::he_seal::HESealBackend*>(client_backend.get());
 
+    auto context = he_client_backend->get_context();
+
+    std::ostringstream public_key_stream;
+    he_client_backend->get_public_key()->save(public_key_stream);
+    std::string public_key_str = public_key_stream.str();
+
+    // auto socket = connect_to_server(hostname, port);
+
+    // NGRAPH_INFO << "Sending public key";
+    // send_data(socket, public_key_str);
+
+    // NGRAPH_INFO << "Public key " << public_key_str;
+  }
+}
+
+NGRAPH_TEST(${BACKEND_NAME}, server_and_client_test) {
+  auto hostname = "localhost";
+  auto port = 33000;
+
+  pid_t childPID = fork();
+  if (childPID < 0) {
+    throw ngraph_error("Fork failed");
+  }
+
+  if (childPID > 0)  // server
+  {
+    runtime::he::network::server_init(port, 2);
+    sleep(2);  // Wait until client finished its connections
+
+  } else {     // client
     sleep(1);  // Wait until server opened
-    NGRAPH_INFO << "client pid";
 
-    connect_to_server(hostname, port);
+    auto socket = runtime::he::network::connect_to_server(hostname, port);
+    socket = runtime::he::network::connect_to_server(hostname, port);
 
-    NGRAPH_INFO << "Connected to server";
-    connect_to_server(hostname, port);
-    NGRAPH_INFO << "Connected to server again";
+    runtime::he::network::send_data(socket, "Message");
+
+    void* data;
+    runtime::he::network::receive_data(socket, data);
+
+    NGRAPH_INFO << "Closing socket";
+    socket.close();
 
     return;
   }

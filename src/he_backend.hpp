@@ -39,6 +39,7 @@
 #include "ngraph/type/element_type.hpp"
 #include "ngraph/util.hpp"
 #include "node_wrapper.hpp"
+#include "tcpip/tcpip_util.hpp"
 
 namespace ngraph {
 namespace runtime {
@@ -217,8 +218,10 @@ class HEBackend : public runtime::Backend {
   bool encrypt_model() const { return m_encrypt_model; };
 
   Role get_role() const { return m_role; };
-
   void set_role(const std::string& role);
+
+  // Initializes server at given port
+  void server_init(const size_t port, const size_t connection_limit = 100);
 
  private:
   class FunctionInstance {

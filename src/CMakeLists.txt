@@ -46,6 +46,9 @@ set (HE_SRC
     he_plain_tensor.cpp
     he_tensor.cpp
     node_wrapper.cpp
+
+    # networking
+    tcpip/tcpip_util.cpp
 )
 include_directories(
     SYSTEM
