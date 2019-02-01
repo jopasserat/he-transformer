@@ -121,6 +121,14 @@ class HESealBackend : public HEBackend {
   const std::shared_ptr<const runtime::he::HEPlaintext> get_valued_plaintext(
       double value) const;
 
+  /// @brief connects to server at hostname:port
+  void connect_to_server(const std::string& hostname, const size_t port);
+
+  void he_session(tcp::socket sock);
+
+  // Initializes server at given port
+  void server_init(const size_t port, const size_t connection_limit = 100);
+
  protected:
   std::shared_ptr<seal::SecretKey> m_secret_key;
   std::shared_ptr<seal::PublicKey> m_public_key;

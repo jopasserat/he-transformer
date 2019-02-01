@@ -45,7 +45,7 @@ tcp::socket runtime::he::network::connect_to_server(const std::string& hostname,
 
 // Reads data from socket, and writes it back
 void runtime::he::network::session(tcp::socket sock) {
-  const int max_length = 1024;
+  const int max_length = 66000;
   try {
     for (;;) {
       char data[max_length];
@@ -77,7 +77,7 @@ void runtime::he::network::server_init(const size_t port,
     std::cout << "Server initialized with up to " << conn_limit
               << " connections" << std::endl;
 
-    for (int i = 0; i < conn_limit; ++i) {
+    for (size_t i = 0; i < conn_limit; ++i) {
       std::cout << "Starting accept thread " << i << std::endl;
       std::thread(session, acceptor.accept()).detach();
     }
@@ -93,10 +93,10 @@ void runtime::he::network::server_init(const size_t port,
 // @param bytes number of bytes in data to send
 void runtime::he::network::send_data(tcp::socket& socket,
                                      const std::string& data) {
-  std::cout << "Sending message: " << data << std::endl;
+  std::cout << "Sending message size: " << data.size() << std::endl;
   boost::system::error_code ignored_error;
   boost::asio::write(socket, boost::asio::buffer(data), ignored_error);
-  std::cout << "Sent message: " << data << std::endl;
+  std::cout << "Sent message size: " << data.size() << std::endl;
 }
 
 // Receives data
