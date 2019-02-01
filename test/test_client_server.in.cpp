@@ -90,7 +90,7 @@ NGRAPH_TEST(${BACKEND_NAME}, create_server_client) {
 
     //  sleep(1);
 
-    runtime::he::network::send_data(socket, "DONE");
+    runtime::he::network::send_data(socket, "DONE2DONE2");
   };
 
   // Run server and client

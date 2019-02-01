@@ -21,6 +21,7 @@
 #include "seal/ckks/he_seal_ckks_backend.hpp"
 #include "seal/he_seal_backend.hpp"
 #include "seal/seal.h"
+#include "tcpip/tcp_message.hpp"
 
 using namespace ngraph;
 using namespace std;
@@ -128,7 +129,7 @@ void runtime::he::he_seal::HESealBackend::server_init(
 
   const int max_length = 66000;
   const int PUBLIC_KEY_LENGTH = 65609;  // TODO: better message-passing protocol
-  const int DONE_LENGTH = 4;
+  const int DONE_LENGTH = 10;
 
   try {
     boost::asio::io_context io_context;
@@ -143,6 +144,8 @@ void runtime::he::he_seal::HESealBackend::server_init(
       NGRAPH_INFO << "Created socket";
       char data[max_length];
 
+      tcp_message msg;
+
       boost::system::error_code error;
       boost::asio::streambuf response;
 
@@ -153,6 +156,10 @@ void runtime::he::he_seal::HESealBackend::server_init(
       } else if (error) {
         NGRAPH_INFO << "Some error";
         throw boost::system::system_error(error);  // Some other error.
+      }
+
+      if (length == tcp_message::header_length) {
+        NGRAPH_INFO << "Read message length 1";
       }
 
       NGRAPH_INFO << "Server got message length " << length;

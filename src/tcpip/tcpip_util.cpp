@@ -95,6 +95,12 @@ void runtime::he::network::send_data(tcp::socket& socket,
                                      const std::string& data) {
   std::cout << "Sending message size: " << data.size() << std::endl;
   boost::system::error_code ignored_error;
+  std::string data_size{data.size()};
+  // Send data size first.
+
+
+
+  boost::asio::write(socket, boost::asio::buffer(data_size), ignored_error);
   boost::asio::write(socket, boost::asio::buffer(data), ignored_error);
   std::cout << "Sent message size: " << data.size() << std::endl;
 }

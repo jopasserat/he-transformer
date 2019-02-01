@@ -98,11 +98,40 @@ add_custom_target(he_seal_bfv_backend ALL DEPENDS he_backend
 
 # TCPIP testing for now
 
+find_package(OpenSSL REQUIRED)
+if (OPENSSL_FOUND)
+    message("OPENSSL_INCLUDE_DIR ${OPENSSL_INCLUDE_DIR}")
+    include_directories(${OPENSSL_INCLUDE_DIR})
+else()
+    message(FATAL "OpenSSL not found")
+endif()
+
+
 find_package(Boost 1.69)
 if(Boost_FOUND)
   include_directories(${Boost_INCLUDE_DIRS})
+  set (Beast_INCLUDE_DIRS "${Boost_INCLUDE_DIRS}/libs/beast/")
+  include_directories(${Beast_INCLUDE_DIRS})
+
+  message("Boost directory ${Boost_INCLUDE_DIRS}" )
+  message("Beast_INCLUDE_DIRS ${Beast_INCLUDE_DIRS}")
   add_executable(tcp_client tcpip/client.cpp)
   add_executable(tcp_server tcpip/server.cpp)
+
+  add_executable(web_client_ssl tcpip/beast_websocket_client_sync_ssl.cpp)
+  add_executable(web_client tcpip/beast_websocket_client_sync.cpp)
+  add_executable(web_server_ssl tcpip/beast_websocket_server_sync_ssl.cpp)
+  add_executable(web_server tcpip/beast_websocket_server_sync.cpp)
+
+  # Link ssl
+  target_link_libraries(web_client_ssl ${OPENSSL_LIBRARIES})
+  target_link_libraries(web_client ${OPENSSL_LIBRARIES})
+  target_link_libraries(web_server_ssl ${OPENSSL_LIBRARIES})
+  target_link_libraries(web_server ${OPENSSL_LIBRARIES})
+
+
 else()
   message(FATAL "Boost not found")
 endif()
+
+
