@@ -20,6 +20,7 @@
 #include <vector>
 
 #include "he_backend.hpp"
+#include "he_context.hpp"
 #include "he_tensor.hpp"
 #include "ngraph/runtime/backend.hpp"
 #include "ngraph/util.hpp"
@@ -33,8 +34,8 @@ class HEExecutable : public Executable {
  public:
   HEExecutable(const std::shared_ptr<Function>& function,
                bool enable_performance_collection,
-               const runtime::he::HEBackend* he_backend, bool encrypt_data,
-               bool encrypt_model, bool batch_data);
+               const std::shared_ptr<runtime::he::HEContext> he_context,
+               bool encrypt_data, bool encrypt_model, bool batch_data);
 
   bool call(const std::vector<std::shared_ptr<Tensor>>& outputs,
             const std::vector<std::shared_ptr<Tensor>>& inputs) override;
@@ -50,7 +51,7 @@ class HEExecutable : public Executable {
   bool m_batch_data;
   bool m_encrypt_model;
   bool m_is_compiled = false;
-  const HEBackend* m_he_backend = nullptr;  // TODO: replace with context
+  std::shared_ptr<HEContext> m_he_context;  // TODO: replace with context
   std::unordered_map<const Node*, stopwatch> m_timer_map;
   std::vector<NodeWrapper> m_wrapped_nodes;
 

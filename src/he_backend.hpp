@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "he_ciphertext.hpp"
+#include "he_context.hpp"
 #include "he_plaintext.hpp"
 #include "he_tensor.hpp"
 #include "ngraph/descriptor/layout/dense_tensor_layout.hpp"
@@ -198,6 +199,7 @@ class HEBackend : public runtime::Backend {
   bool encrypt_model() const { return m_encrypt_model; };
 
  private:
+  std::shared_ptr<HEContext> m_he_context;
   bool m_optimized_add{std::getenv("NGRAPH_OPTIMIZED_ADD") != nullptr};
   bool m_optimized_mult{std::getenv("NGRAPH_OPTIMIZED_MULT") != nullptr};
   bool m_encrypt_data{std::getenv("NGRAPH_ENCRYPT_DATA") != nullptr};

@@ -69,15 +69,16 @@ using descriptor::layout::DenseTensorLayout;
 
 runtime::he::HEExecutable::HEExecutable(const shared_ptr<Function>& function,
                                         bool enable_performance_collection,
-                                        const HEBackend* he_backend,
+                                        const shared_ptr<HEContext> he_context,
                                         bool encrypt_data, bool encrypt_model,
                                         bool batch_data)
-    : m_he_backend(he_backend),
+    : m_he_context(he_context),
       m_encrypt_data(encrypt_data),
       m_encrypt_model(encrypt_model),
       m_batch_data(batch_data) {
   NGRAPH_INFO << "Compiling function";
-  NGRAPH_ASSERT(he_backend != nullptr) << "he_backend == nullptr";
+  NGRAPH_ASSERT(he_context != nullptr)
+      << "he_context == nullptr in HEExecutable";
 
   m_is_compiled = true;
   pass::Manager pass_manager;
@@ -315,6 +316,7 @@ bool runtime::he::HEExecutable::call(
     for (const descriptor::Tensor* t : op->liveness_free_list) {
       for (auto it = tensor_map.begin(); it != tensor_map.end(); ++it) {
         if (it->second->get_name() == t->get_name()) {
+          NGRAPH_DEBUG << "Erasing tensor " << t->get_name();
           tensor_map.erase(it);
           break;
         }
