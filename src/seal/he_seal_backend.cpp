@@ -24,8 +24,11 @@
 using namespace ngraph;
 using namespace std;
 
-extern "C" const char* get_ngraph_version_string() {
-  return "v0.9.1";  // TODO: move to CMakeLists
+extern "C" const char*
+get_ngraph_version_string() {  // TODO: nGraph will chagne the mechanism of how
+                               // version number is generated
+  //       Currently version number consistency is not checked in nGraph
+  return "DUMMY_VERSION_NUMBER";
 }
 
 extern "C" runtime::Backend* new_backend(const char* configuration_chars) {
@@ -56,8 +59,9 @@ void runtime::he::he_seal::HESealBackend::assert_valid_seal_parameter(
         "m_poly_modulus must be 1024, 2048, 4096, 8192, 16384, 32768");
   }
 
-  if (sp->m_security_level != 128 && sp->m_security_level != 192) {
-    throw ngraph_error("sp.security_level must be 128, 192");
+  static unordered_set<uint64_t> valid_security_levels{128, 192, 256};
+  if (valid_security_levels.count(sp->m_security_level) == 0) {
+    throw ngraph_error("sp.security_level must be 128, 192, 256");
   }
 
   if (sp->m_evaluation_decomposition_bit_count > 60 ||
