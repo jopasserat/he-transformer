@@ -84,7 +84,7 @@ class HESealClient {
       std::cout << "Parameter size " << parameter_size << std::endl;
 
       std::vector<seal::Ciphertext> ciphers;
-      assert(m_inputs.size() == shape_size);
+      assert(m_inputs.size() == parameter_size);
 
       std::stringstream cipher_stream;
 
