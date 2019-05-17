@@ -50,8 +50,8 @@ runtime::he::he_seal::HESealCKKSBackend::HESealCKKSBackend(
   auto he_seal_encryption_parms =
       static_pointer_cast<runtime::he::he_seal::HESealEncryptionParameters>(sp);
 
-  NGRAPH_ASSERT(he_seal_encryption_parms != nullptr)
-      << "HE_SEAL_CKKS backend passed invalid encryption parameters";
+  NGRAPH_CHECK(he_seal_encryption_parms != nullptr,
+               "HE_SEAL_CKKS backend passed invalid encryption parameters");
   m_context = seal::SEALContext::Create(
       *(he_seal_encryption_parms->seal_encryption_parameters()));
 
@@ -152,9 +152,8 @@ void runtime::he::he_seal::HESealCKKSBackend::encode(
     } else {
       real_vec_to_complex_vec(complex_vals, double_vals);
     }
-    NGRAPH_ASSERT(complex_vals.size() <= slots)
-        << "Cannot encode " << complex_vals.size()
-        << " elements, maximum size is " << slots;
+    NGRAPH_CHECK(complex_vals.size() <= slots, "Cannot encode ",
+                 complex_vals.size(), " elements, maximum size is ", slots);
     m_ckks_encoder->encode(complex_vals, m_scale, plaintext->get_plaintext());
   } else {
     // TODO: why different cases?
@@ -162,9 +161,8 @@ void runtime::he::he_seal::HESealCKKSBackend::encode(
       m_ckks_encoder->encode(double_vals[0], m_scale,
                              plaintext->get_plaintext());
     } else {
-      NGRAPH_ASSERT(double_vals.size() <= slots)
-          << "Cannot encode " << double_vals.size()
-          << " elements, maximum size is " << slots;
+      NGRAPH_CHECK(double_vals.size() <= slots, "Cannot encode ",
+                   double_vals.size(), " elements, maximum size is ", slots);
       m_ckks_encoder->encode(double_vals, m_scale, plaintext->get_plaintext());
     }
   }
@@ -178,11 +176,12 @@ void runtime::he::he_seal::HESealCKKSBackend::encode(
   auto seal_plaintext_wrapper =
       dynamic_pointer_cast<runtime::he::he_seal::SealPlaintextWrapper>(output);
 
-  NGRAPH_ASSERT(seal_plaintext_wrapper != nullptr)
-      << "HEPlaintext is not SealPlaintextWrapper";
+  NGRAPH_CHECK(seal_plaintext_wrapper != nullptr,
+               "HEPlaintext is not SealPlaintextWrapper");
 
-  NGRAPH_ASSERT(type == element::f32)
-      << "CKKS encode supports only float encoding, received type " << type;
+  NGRAPH_CHECK(type == element::f32,
+               "CKKS encode supports only float encoding, received type ",
+               type);
 
   vector<float> values{(float*)input, (float*)input + count};
   seal_plaintext_wrapper->set_values(values);
@@ -193,22 +192,23 @@ void runtime::he::he_seal::HESealCKKSBackend::encode(
 void runtime::he::he_seal::HESealCKKSBackend::decode(
     void* output, runtime::he::HEPlaintext* input, const element::Type& type,
     size_t count) const {
-  NGRAPH_ASSERT(count != 0) << "Decode called on 0 elements";
-  NGRAPH_ASSERT(type == element::f32)
-      << "CKKS encode supports only float encoding, received type " << type;
+  NGRAPH_CHECK(count != 0, "Decode called on 0 elements");
+  NGRAPH_CHECK(type == element::f32,
+               "CKKS encode supports only float encoding, received type ",
+               type);
   decode(input);
 
   vector<float> xs_float = input->get_values();
 
-  NGRAPH_ASSERT(xs_float.size() >= count);
+  NGRAPH_CHECK(xs_float.size() >= count);
   memcpy(output, &xs_float[0], type.size() * count);
 }
 
 void runtime::he::he_seal::HESealCKKSBackend::decode(
     runtime::he::HEPlaintext* input) const {
   auto seal_input = dynamic_cast<const SealPlaintextWrapper*>(input);
-  NGRAPH_ASSERT(seal_input != nullptr)
-      << "HESealCKKSBackend::decode input is not seal plaintext";
+  NGRAPH_CHECK(seal_input != nullptr,
+               "HESealCKKSBackend::decode input is not seal plaintext");
 
   vector<double> real_vals;
   if (input->complex_packing()) {

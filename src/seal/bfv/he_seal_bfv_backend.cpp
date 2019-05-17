@@ -40,8 +40,8 @@ runtime::he::he_seal::HESealBFVBackend::HESealBFVBackend(
 
   auto he_seal_encryption_parms =
       static_pointer_cast<runtime::he::he_seal::HESealEncryptionParameters>(sp);
-  NGRAPH_ASSERT(he_seal_encryption_parms != nullptr)
-      << "HE_SEAL_BFV backend passed invalid encryption parameters";
+  NGRAPH_CHECK(he_seal_encryption_parms != nullptr,
+               "HE_SEAL_BFV backend passed invalid encryption parameters");
   m_context = seal::SEALContext::Create(
       *(he_seal_encryption_parms->seal_encryption_parameters()));
   print_seal_context(*m_context);
@@ -108,8 +108,8 @@ void runtime::he::he_seal::HESealBFVBackend::encode(
     throw ngraph_error("Batching not enabled for SEAL in encode");
   }
 
-  NGRAPH_ASSERT(type == element::f32)
-      << "BFV encode supports only float encoding, received type " << type;
+  NGRAPH_CHECK(type == element::f32,
+               "BFV encode supports only float encoding, received type ", type);
 
   float float_val = *(float*)input;
   int32_t int_val;
@@ -133,8 +133,8 @@ void runtime::he::he_seal::HESealBFVBackend::encode(
   vector<double> double_vals(plaintext->get_values().begin(),
                              plaintext->get_values().end());
 
-  NGRAPH_ASSERT(plaintext->num_values() == 1)
-      << "BFV backend doesn't support batched encoding";
+  NGRAPH_CHECK(plaintext->num_values() == 1,
+               "BFV backend doesn't support batched encoding");
 
   float float_val = plaintext->get_values()[0];
 
@@ -164,8 +164,8 @@ void runtime::he::he_seal::HESealBFVBackend::decode(
     runtime::he::HEPlaintext* input) const {
   auto seal_input = dynamic_cast<const SealPlaintextWrapper*>(input);
 
-  NGRAPH_ASSERT(seal_input != nullptr)
-      << "HESealBFVBackend::decode input is not seal plaintext";
+  NGRAPH_CHECK(seal_input != nullptr,
+               "HESealBFVBackend::decode input is not seal plaintext");
 
   int32_t val = m_integer_encoder->decode_int32(seal_input->get_plaintext());
   float fl_val{val};

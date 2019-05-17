@@ -86,10 +86,10 @@ runtime::he::HEExecutable::HEExecutable(const shared_ptr<Function>& function,
       m_relu_done(false),
       m_session_started(false),
       m_client_inputs_received(false) {
-  NGRAPH_ASSERT(he_backend != nullptr) << "he_backend == nullptr";
+  NGRAPH_CHECK(he_backend != nullptr, "he_backend == nullptr");
   // TODO: move get_context to HEBackend
   auto he_seal_backend = (runtime::he::he_seal::HESealBackend*)he_backend;
-  NGRAPH_ASSERT(he_seal_backend != nullptr) << "he_seal_backend == nullptr";
+  NGRAPH_CHECK(he_seal_backend != nullptr);
   m_context = he_seal_backend->get_context();
 
   m_is_compiled = true;
@@ -118,13 +118,13 @@ runtime::he::HEExecutable::HEExecutable(const shared_ptr<Function>& function,
     NGRAPH_INFO << "Enable client";
 
     // only support parameter size 1 for now
-    NGRAPH_ASSERT(get_parameters().size() == 1)
-        << "HEExecutable only supports parameter size 1 (got "
-        << get_parameters().size() << ")";
+    NGRAPH_CHECK(get_parameters().size() == 1,
+                 "HEExecutable only supports parameter size 1 (got ",
+                 get_parameters().size(), ")");
     // only support function output size 1 for now
-    NGRAPH_ASSERT(get_results().size() == 1)
-        << "HEExecutable only supports output size 1 (got "
-        << get_results().size() << "";
+    NGRAPH_CHECK(get_results().size() == 1,
+                 "HEExecutable only supports output size 1 (got ",
+                 get_results().size());
 
     // Start server
     NGRAPH_INFO << "Starting server";
@@ -134,12 +134,7 @@ runtime::he::HEExecutable::HEExecutable(const shared_ptr<Function>& function,
     stringstream param_stream;
     shared_ptr<HEEncryptionParameters> parms =
         he_backend->get_encryption_parameters();
-    NGRAPH_ASSERT(parms != nullptr) << "HEEncryptionParameters == nullptr";
-
-    // only support parameter size 1 for now
-    NGRAPH_ASSERT(get_parameters().size() == 1)
-        << "HEExecutable only supports parameter size 1 (got "
-        << get_parameters().size() << ")";
+    NGRAPH_CHECK(parms != nullptr);
 
     parms->save(param_stream);
     auto parms_message =
@@ -219,14 +214,14 @@ void runtime::he::HEExecutable::handle_message(
     }
 
     // only support parameter size 1 for now
-    NGRAPH_ASSERT(get_parameters().size() == 1)
-        << "HEExecutable only supports parameter size 1 (got "
-        << get_parameters().size() << ")";
+    NGRAPH_CHECK(get_parameters().size() == 1,
+                 "HEExecutable only supports parameter size 1 (got ",
+                 get_parameters().size(), ")");
 
     // only support function output size 1 for now
-    NGRAPH_ASSERT(get_results().size() == 1)
-        << "HEExecutable only supports output size 1 (got "
-        << get_results().size() << "";
+    NGRAPH_CHECK(get_results().size() == 1,
+                 "HEExecutable only supports output size 1 (got ",
+                 get_results().size(), ")");
 
     // Load function with parameters
     size_t num_param_elements = 0;
@@ -235,10 +230,9 @@ void runtime::he::HEExecutable::handle_message(
       num_param_elements += shape_size(input_param->get_shape());
     }
     num_param_elements /= m_batch_size;
-    NGRAPH_ASSERT(count == num_param_elements)
-        << "Count " << count
-        << " does not match number of parameter elements ( "
-        << num_param_elements << ")";
+    NGRAPH_CHECK(count == num_param_elements, "Count ", count,
+                 " does not match number of parameter elements ( ",
+                 num_param_elements, ")");
 
     NGRAPH_INFO << "Setting m_client_inputs";
     size_t parameter_size_index = 0;
@@ -254,8 +248,8 @@ void runtime::he::HEExecutable::handle_message(
           he_cipher_inputs.begin() + parameter_size_index,
           he_cipher_inputs.begin() + parameter_size_index + param_size};
 
-      NGRAPH_ASSERT(cipher_elements.size() == param_size)
-          << "Incorrect number of elements for parameter";
+      NGRAPH_CHECK(cipher_elements.size() == param_size,
+                   "Incorrect number of elements for parameter");
 
       input_tensor->set_elements(cipher_elements);
       for (auto& cipher_elem : cipher_elements) {
@@ -265,9 +259,9 @@ void runtime::he::HEExecutable::handle_message(
       parameter_size_index += param_size;
     }
 
-    NGRAPH_ASSERT(m_client_inputs.size() == get_parameters().size())
-        << "Client inputs size " << m_client_inputs.size() << "; expected "
-        << get_parameters().size();
+    NGRAPH_CHECK(m_client_inputs.size() == get_parameters().size(),
+                 "Client inputs size ", m_client_inputs.size(), "; expected ",
+                 get_parameters().size());
 
     std::lock_guard<mutex> guard(m_client_inputs_mutex);
     m_client_inputs_received = true;
@@ -345,8 +339,7 @@ void runtime::he::HEExecutable::handle_message(
         he_ciphertext->set_complex_packing(true);
       }
 
-      NGRAPH_ASSERT(he_ciphertext != nullptr)
-          << "HECiphertext is not SealPlaintextWrapper";
+      NGRAPH_CHECK(he_ciphertext != nullptr);
 
       m_relu_ciphertexts.emplace_back(he_ciphertext);
     }
@@ -376,8 +369,7 @@ void runtime::he::HEExecutable::handle_message(
         he_ciphertext->set_complex_packing(true);
       }
 
-      NGRAPH_ASSERT(he_ciphertext != nullptr)
-          << "HECiphertext is not SealPlaintextWrapper";
+      NGRAPH_CHECK(he_ciphertext != nullptr);
 
       m_max_ciphertexts.emplace_back(he_ciphertext);
     }
@@ -402,8 +394,7 @@ void runtime::he::HEExecutable::handle_message(
       auto he_ciphertext =
           dynamic_pointer_cast<runtime::he::HECiphertext>(wrapper);
 
-      NGRAPH_ASSERT(he_ciphertext != nullptr)
-          << "HECiphertext is not SealPlaintextWrapper";
+      NGRAPH_CHECK(he_ciphertext != nullptr);
       if (m_he_backend->complex_packing()) {
         he_ciphertext->set_complex_packing(true);
       }
@@ -445,9 +436,9 @@ bool runtime::he::HEExecutable::call(
         mlock, std::bind(&HEExecutable::client_inputs_received, this));
     NGRAPH_INFO << "client_inputs_received";
 
-    NGRAPH_ASSERT(m_client_inputs.size() == server_inputs.size())
-        << "Recieved incorrect number of inputs from client (got "
-        << m_client_inputs.size() << ", expectd " << server_inputs.size();
+    NGRAPH_CHECK(m_client_inputs.size() == server_inputs.size(),
+                 "Recieved incorrect number of inputs from client (got ",
+                 m_client_inputs.size(), ", expectd ", server_inputs.size());
 
     NGRAPH_INFO << "Done waiting for m_client_inputs";
   }
@@ -476,7 +467,7 @@ bool runtime::he::HEExecutable::call(
     NGRAPH_INFO << "Processing server inputs";
     for (auto& tv : server_inputs) {
       auto he_input = dynamic_pointer_cast<runtime::he::HETensor>(tv);
-      NGRAPH_ASSERT(he_input != nullptr) << "server input is not he tensor";
+      NGRAPH_CHECK(he_input != nullptr);
       he_inputs.push_back(he_input);
     }
   }
@@ -500,7 +491,7 @@ bool runtime::he::HEExecutable::call(
         NGRAPH_INFO << "Encrypting parameter " << i;
         auto plain_input = dynamic_pointer_cast<runtime::he::HEPlainTensor>(
             he_inputs[input_count]);
-        NGRAPH_ASSERT(plain_input != nullptr) << "Input is not plain tensor";
+        NGRAPH_CHECK(plain_input != nullptr);
         auto cipher_input = dynamic_pointer_cast<HECipherTensor>(
             m_he_backend->create_cipher_tensor(plain_input->get_element_type(),
                                                plain_input->get_shape(),
@@ -641,9 +632,9 @@ bool runtime::he::HEExecutable::call(
 
   // Send outputs to client.
   if (m_enable_client) {
-    NGRAPH_ASSERT(m_client_outputs.size() == 1)
-        << "HEExecutable only supports output size 1 (got "
-        << get_results().size() << "";
+    NGRAPH_CHECK(m_client_outputs.size() == 1,
+                 "HEExecutable only supports output size 1 (got ",
+                 get_results().size());
 
     std::vector<seal::Ciphertext> seal_output;
 
@@ -654,8 +645,8 @@ bool runtime::he::HEExecutable::call(
     auto output_cipher_tensor =
         dynamic_pointer_cast<HECipherTensor>(m_client_outputs[0]);
 
-    NGRAPH_ASSERT(output_cipher_tensor != nullptr)
-        << "Client outputs are not HECipherTensor";
+    NGRAPH_CHECK(output_cipher_tensor != nullptr,
+                 "Client outputs are not HECipherTensor");
 
     std::stringstream cipher_stream;
     output_cipher_tensor->save_elements(cipher_stream);
@@ -696,8 +687,8 @@ void runtime::he::HEExecutable::generate_calls(
   Shape out_shape{};
   Shape unbatched_out_shape{};
   if (node.get_output_size() > 0) {
-    NGRAPH_ASSERT(node.get_output_size() == 1)
-        << "Only support single-output functions";
+    NGRAPH_CHECK(node.get_output_size() == 1,
+                 "Only support single-output functions");
     out_shape = node.get_output_shape(0);
     unbatched_out_shape = out_shape;
     if (m_batch_data) {
@@ -708,18 +699,18 @@ void runtime::he::HEExecutable::generate_calls(
   if (args.size() > 0) {
     arg0_cipher = dynamic_pointer_cast<HECipherTensor>(args[0]);
     arg0_plain = dynamic_pointer_cast<HEPlainTensor>(args[0]);
-    NGRAPH_ASSERT(arg0_cipher == nullptr || arg0_plain == nullptr)
-        << "arg0 is netiher cipher nor plain";
-    NGRAPH_ASSERT(!(arg0_cipher != nullptr && arg0_plain != nullptr))
-        << "arg0 is both cipher and plain?";
+    NGRAPH_CHECK(arg0_cipher == nullptr || arg0_plain == nullptr,
+                 "arg0 is netiher cipher nor plain");
+    NGRAPH_CHECK(!(arg0_cipher != nullptr && arg0_plain != nullptr),
+                 "arg0 is both cipher and plain?");
   }
   if (args.size() > 1) {
     arg1_cipher = dynamic_pointer_cast<HECipherTensor>(args[1]);
     arg1_plain = dynamic_pointer_cast<HEPlainTensor>(args[1]);
-    NGRAPH_ASSERT(arg1_cipher == nullptr || arg1_plain == nullptr)
-        << "arg1 is neither cipher nor plain";
-    NGRAPH_ASSERT(!(arg1_cipher != nullptr && arg1_plain != nullptr))
-        << "arg1 is both cipher and plain?";
+    NGRAPH_CHECK(arg1_cipher == nullptr || arg1_plain == nullptr,
+                 "arg1 is neither cipher nor plain");
+    NGRAPH_CHECK(!(arg1_cipher != nullptr && arg1_plain != nullptr),
+                 "arg1 is both cipher and plain?");
   }
 
   stringstream ss;
@@ -808,9 +799,8 @@ void runtime::he::HEExecutable::generate_calls(
       const ngraph::op::BatchNormInference* bn =
           static_cast<const ngraph::op::BatchNormInference*>(&node);
       double eps = bn->get_eps_value();
-      NGRAPH_ASSERT(args.size() == 5)
-          << "BatchNormInference has " << args.size()
-          << "arguments (expected 5).";
+      NGRAPH_CHECK(args.size() == 5, "BatchNormInference has ", args.size(),
+                   "arguments (expected 5).");
 
       auto gamma = dynamic_pointer_cast<HEPlainTensor>(args[0]);
       auto beta = dynamic_pointer_cast<HEPlainTensor>(args[1]);
@@ -818,12 +808,12 @@ void runtime::he::HEExecutable::generate_calls(
       auto mean = dynamic_pointer_cast<HEPlainTensor>(args[3]);
       auto variance = dynamic_pointer_cast<HEPlainTensor>(args[4]);
 
-      NGRAPH_ASSERT(out0_cipher != nullptr) << "BatchNorm output not cipher";
-      NGRAPH_ASSERT(gamma != nullptr) << "BatchNorm gamma not plain";
-      NGRAPH_ASSERT(beta != nullptr) << "BatchNorm beta not plain";
-      NGRAPH_ASSERT(input != nullptr) << "BatchNorm input not cipher";
-      NGRAPH_ASSERT(mean != nullptr) << "BatchNorm mean not plaintext";
-      NGRAPH_ASSERT(variance != nullptr) << "BatchNorm variance not plaintext";
+      NGRAPH_CHECK(out0_cipher != nullptr, "BatchNorm output not cipher");
+      NGRAPH_CHECK(gamma != nullptr, "BatchNorm gamma not plain");
+      NGRAPH_CHECK(beta != nullptr, "BatchNorm beta not plain");
+      NGRAPH_CHECK(input != nullptr, "BatchNorm input not cipher");
+      NGRAPH_CHECK(mean != nullptr, "BatchNorm mean not plaintext");
+      NGRAPH_CHECK(variance != nullptr, "BatchNorm variance not plaintext");
 
       runtime::he::kernel::batch_norm_inference(
           eps, gamma->get_elements(), beta->get_elements(),
@@ -1104,8 +1094,8 @@ void runtime::he::HEExecutable::generate_calls(
                                 (arg1_plain->get_element(elem_idx).get()));
         }
       }
-      NGRAPH_ASSERT(arg0_cipher != nullptr) << "arg0_cipher is nullptr";
-      NGRAPH_ASSERT(arg1_cipher != nullptr) << "arg1_cipher is nullptr";
+      NGRAPH_CHECK(arg0_cipher != nullptr);
+      NGRAPH_CHECK(arg1_cipher != nullptr);
 
       m_minimum_ciphertexts.clear();
 
@@ -1117,17 +1107,16 @@ void runtime::he::HEExecutable::generate_calls(
       Shape out_shape = node.get_output_shape(0);
       out_shape[0] /= m_batch_size;
 
-      NGRAPH_ASSERT(arg0_cipher->get_elements().size() ==
-                    arg1_cipher->get_elements().size())
-          << "Element counts " << arg0_cipher->get_elements().size() << ",  "
-          << arg1_cipher->get_elements().size() << "do not match";
+      NGRAPH_CHECK(arg0_cipher->get_elements().size() ==
+                       arg1_cipher->get_elements().size(),
+                   "Element counts ", arg0_cipher->get_elements().size(), ",  ",
+                   arg1_cipher->get_elements().size(), "do not match");
 
       stringstream cipher_stream;
       size_t cipher_count = 0;
       auto he_ckks_backend =
           (runtime::he::he_seal::HESealCKKSBackend*)m_he_backend;
-      NGRAPH_ASSERT(he_ckks_backend != nullptr)
-          << "HEBackend is not CKKS in Minimum Op";
+      NGRAPH_CHECK(he_ckks_backend != nullptr);
       for (size_t min_ind = 0; min_ind < element_count; ++min_ind) {
         auto cipher0 = arg0_cipher->get_element(min_ind);
         auto cipher1 = arg1_cipher->get_element(min_ind);
