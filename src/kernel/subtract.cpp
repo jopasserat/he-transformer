@@ -53,7 +53,7 @@ void kernel::scalar_subtract(HEPlaintext* arg0, HEPlaintext* arg1,
                              shared_ptr<HEPlaintext>& out,
                              const element::Type& element_type,
                              const HEBackend* he_backend) {
-  NGRAPH_ASSERT(element_type == element::f32);
+  NGRAPH_CHECK(element_type == element::f32);
 
   std::vector<float> arg0_vals = arg0->get_values();
   std::vector<float> arg1_vals = arg1->get_values();
@@ -69,20 +69,20 @@ void kernel::scalar_subtract(HECiphertext* arg0, HEPlaintext* arg1,
                              shared_ptr<HECiphertext>& out,
                              const element::Type& type,
                              const HEBackend* he_backend) {
-  NGRAPH_ASSERT(type == element::f32) << "Only type float32 supported";
+  NGRAPH_CHECK(type == element::f32, "Only type float32 supported");
 
   auto he_seal_backend =
       dynamic_cast<const he_seal::HESealBackend*>(he_backend);
 
-  NGRAPH_ASSERT(he_seal_backend != nullptr) << "HEBackend is not HESealBackend";
+  NGRAPH_CHECK(he_seal_backend != nullptr);
 
   auto arg0_seal = dynamic_cast<he_seal::SealCiphertextWrapper*>(arg0);
   auto arg1_seal = dynamic_cast<he_seal::SealPlaintextWrapper*>(arg1);
   auto out_seal = dynamic_pointer_cast<he_seal::SealCiphertextWrapper>(out);
 
-  NGRAPH_ASSERT(arg0_seal != nullptr) << "arg0 is not Seal Ciphertext";
-  NGRAPH_ASSERT(arg1_seal != nullptr) << "arg1 is not Seal Plaintext";
-  NGRAPH_ASSERT(out_seal != nullptr) << "out is not Seal Ciphertext";
+  NGRAPH_CHECK(arg0_seal != nullptr);
+  NGRAPH_CHECK(arg1_seal != nullptr);
+  NGRAPH_CHECK(out_seal != nullptr);
 
   bool sub_zero =
       arg1_seal->is_single_value() && (arg1_seal->get_values()[0] == 0.0f);

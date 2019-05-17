@@ -14,10 +14,10 @@
 // limitations under the License.
 //*****************************************************************************
 
+#include "seal/kernel/add_seal.hpp"
 #include "seal/bfv/kernel/add_seal_bfv.hpp"
 #include "seal/ckks/he_seal_ckks_backend.hpp"
 #include "seal/ckks/kernel/add_seal_ckks.hpp"
-#include "seal/kernel/add_seal.hpp"
 
 using namespace std;
 using namespace ngraph::runtime::he;
@@ -62,7 +62,7 @@ void he_seal::kernel::scalar_add(
     const element::Type& element_type,
     const he_seal::HESealBackend* he_seal_backend,
     const seal::MemoryPoolHandle& pool) {
-  NGRAPH_ASSERT(element_type == element::f32);
+  NGRAPH_CHECK(element_type == element::f32);
 
   // TODO: handle case where arg1 = {0, 0, 0, 0, ...}
   bool add_zero = arg1->is_single_value() && (arg1->get_values()[0] == 0.0f);
@@ -127,7 +127,7 @@ void he_seal::kernel::scalar_add(he_seal::SealPlaintextWrapper* arg0,
                                  const element::Type& element_type,
                                  const he_seal::HESealBackend* he_seal_backend,
                                  const seal::MemoryPoolHandle& pool) {
-  NGRAPH_ASSERT(element_type == element::f32);
+  NGRAPH_CHECK(element_type == element::f32);
 
   const std::vector<float>& arg0_vals = arg0->get_values();
   const std::vector<float>& arg1_vals = arg1->get_values();

@@ -96,7 +96,7 @@ void runtime::he::HEPlainTensor::read(void* target, size_t tensor_offset,
 
   check_io_bounds(target, tensor_offset, n);
   const element::Type& element_type = get_tensor_layout()->get_element_type();
-  NGRAPH_ASSERT(element_type == element::f32) << "Only support float32";
+  NGRAPH_CHECK(element_type == element::f32, "Only support float32");
   size_t type_byte_size = element_type.size();
   size_t src_start_index = tensor_offset / type_byte_size;
   size_t num_elements_to_read = n / (type_byte_size * m_batch_size);

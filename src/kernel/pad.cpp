@@ -45,9 +45,9 @@ void runtime::he::kernel::pad(
   auto he_seal_ckks_backend =
       dynamic_cast<const runtime::he::he_seal::HESealCKKSBackend*>(he_backend);
 
-  NGRAPH_ASSERT(he_seal_backend != nullptr) << "pad supports only Seal backend";
-  NGRAPH_ASSERT(he_seal_ckks_backend != nullptr)
-      << "pad supports only CKKS backend";
+  NGRAPH_CHECK(he_seal_backend != nullptr, "pad supports only HE backend");
+  NGRAPH_CHECK(he_seal_ckks_backend != nullptr,
+               "pad supports only CKKS backend");
 
   shared_ptr<runtime::he::HECiphertext> arg1_encrypted;
   arg1_encrypted = he_seal_backend->create_empty_ciphertext();

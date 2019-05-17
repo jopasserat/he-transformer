@@ -29,6 +29,8 @@ from tensorflow.examples.tutorials.mnist import input_data
 import tensorflow as tf
 import common
 import ngraph_bridge
+ngraph_bridge.set_backend('HE_SEAL_CKKS')
+print(ngraph_bridge.get_currently_set_backend_name())
 
 import os
 FLAGS = None
@@ -126,6 +128,11 @@ def cryptonets_test_original(x):
 
 
 def test_mnist_cnn(FLAGS, network):
+    config = tf.ConfigProto()
+    #allow_soft_placement=True,
+    #log_device_placement=True,
+    #inter_op_parallelism_threads=4)
+    config_ngraph_enabled = ngraph_bridge.update_config(config)
 
     # Import data
     mnist = input_data.read_data_sets(FLAGS.data_dir, one_hot=True)
@@ -142,7 +149,7 @@ def test_mnist_cnn(FLAGS, network):
     else:
         y_conv = cryptonets_test_squashed(x)
 
-    with tf.Session() as sess:
+    with tf.Session(config_ngraph_enabled) as sess:
         start_time = time.time()
         x_test = mnist.test.images[:FLAGS.batch_size]
         y_test = mnist.test.labels[:FLAGS.batch_size]
@@ -185,7 +192,7 @@ def test_mnist_cnn(FLAGS, network):
 
 def main(_):
     # Disable mnist dataset deprecation warning
-    tf.logging.set_verbosity(tf.logging.ERROR)
+    tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 
     # Test using the original graph
     # test_mnist_cnn(FLAGS, 'orig')
@@ -214,4 +221,4 @@ if __name__ == '__main__':
         help='Whether or not to save the test image and label.')
 
     FLAGS, unparsed = parser.parse_known_args()
-    tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
+    tf.compat.v1.app.run(main=main, argv=[sys.argv[0]] + unparsed)

@@ -34,8 +34,8 @@ using descriptor::layout::DenseTensorLayout;
 shared_ptr<runtime::he::HEPlaintext>
 runtime::he::HEBackend::create_valued_plaintext(
     float value, const element::Type& element_type) const {
-  NGRAPH_ASSERT(element_type == element::f32)
-      << "element type " << element_type << "unsupported";
+  NGRAPH_CHECK(element_type == element::f32, "element type ", element_type,
+               "unsupported");
 
   shared_ptr<runtime::he::HEPlaintext> plaintext = create_empty_plaintext();
 
@@ -46,12 +46,12 @@ runtime::he::HEBackend::create_valued_plaintext(
 shared_ptr<runtime::he::HECiphertext>
 runtime::he::HEBackend::create_valued_ciphertext(
     float value, const element::Type& element_type, size_t batch_size) const {
-  NGRAPH_ASSERT(element_type == element::f32)
-      << "element type " << element_type << "unsupported";
-  if (batch_size != 1) {
-    throw ngraph_error(
-        "HEBackend::create_valued_ciphertext only supports batch size 1");
-  }
+  NGRAPH_CHECK(element_type == element::f32, "element type ", element_type,
+               "unsupported");
+  NGRAPH_CHECK(
+      batch_size == 1,
+      "HEBackend::create_valued_ciphertext only supports batch size 1");
+
   shared_ptr<runtime::he::HEPlaintext> plaintext =
       create_valued_plaintext(value, element_type);
   shared_ptr<runtime::he::HECiphertext> ciphertext = create_empty_ciphertext();

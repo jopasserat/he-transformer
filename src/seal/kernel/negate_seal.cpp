@@ -24,7 +24,7 @@ void he_seal::kernel::scalar_negate(
     shared_ptr<he_seal::SealCiphertextWrapper>& out,
     const element::Type& element_type,
     const he_seal::HESealBackend* he_seal_backend) {
-  NGRAPH_ASSERT(element_type == element::f32);
+  NGRAPH_CHECK(element_type == element::f32);
   if (arg == out.get()) {
     he_seal_backend->get_evaluator()->negate_inplace(out->m_ciphertext);
   } else {
@@ -38,7 +38,7 @@ void he_seal::kernel::scalar_negate(
     shared_ptr<he_seal::SealPlaintextWrapper>& out,
     const element::Type& element_type,
     const he_seal::HESealBackend* he_seal_backend) {
-  NGRAPH_ASSERT(element_type == element::f32);
+  NGRAPH_CHECK(element_type == element::f32);
 
   const std::vector<float>& arg_vals = arg->get_values();
   std::vector<float> out_vals(arg->num_values());

@@ -62,8 +62,8 @@ void he_seal::kernel::scalar_multiply(
     const element::Type& element_type,
     const he_seal::HESealBackend* he_seal_backend,
     const seal::MemoryPoolHandle& pool) {
-  NGRAPH_ASSERT(element_type == element::f32)
-      << "Element type " << element_type << " is not float";
+  NGRAPH_CHECK(element_type == element::f32, "Element type ", element_type,
+               " is not float");
 
   const auto& values = arg1->get_values();
   // TODO: check multiplying by small numbers behavior more thoroughly
@@ -132,16 +132,14 @@ void he_seal::kernel::scalar_multiply(
     const element::Type& element_type,
     const he_seal::HESealBackend* he_seal_backend,
     const seal::MemoryPoolHandle& pool) {
-  NGRAPH_ASSERT(element_type == element::f32);
+  NGRAPH_CHECK(element_type == element::f32);
 
   std::vector<float> arg0_vals = arg0->get_values();
   std::vector<float> arg1_vals = arg1->get_values();
   std::vector<float> out_vals(arg0->num_values());
 
-  NGRAPH_ASSERT(arg0_vals.size() > 0)
-      << "Multiplying plaintext arg0 has 0 values";
-  NGRAPH_ASSERT(arg1_vals.size() > 0)
-      << "Multiplying plaintext arg1 has 0 values";
+  NGRAPH_CHECK(arg0_vals.size() > 0, "Multiplying plaintext arg0 has 0 values");
+  NGRAPH_CHECK(arg1_vals.size() > 0, "Multiplying plaintext arg1 has 0 values");
 
   if (arg0_vals.size() == 1) {
     std::transform(arg1_vals.begin(), arg1_vals.end(), out_vals.begin(),

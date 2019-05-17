@@ -56,7 +56,7 @@ void runtime::he::he_seal::kernel::scalar_subtract(
     shared_ptr<he_seal::SealPlaintextWrapper>& out,
     const element::Type& element_type,
     const he_seal::HESealBackend* he_seal_backend) {
-  NGRAPH_ASSERT(element_type == element::f32);
+  NGRAPH_CHECK(element_type == element::f32);
 
   const std::vector<float>& arg0_vals = arg0->get_values();
   const std::vector<float>& arg1_vals = arg1->get_values();

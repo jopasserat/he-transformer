@@ -84,7 +84,7 @@ void runtime::he::he_seal::HESealBackend::encrypt(
   m_encryptor->encrypt(seal_input->get_plaintext(), seal_output->m_ciphertext);
   output->set_complex_packing(input->complex_packing());
 
-  NGRAPH_ASSERT(output->complex_packing() == input->complex_packing());
+  NGRAPH_CHECK(output->complex_packing() == input->complex_packing());
 }
 
 void runtime::he::he_seal::HESealBackend::decrypt(
@@ -96,5 +96,5 @@ void runtime::he::he_seal::HESealBackend::decrypt(
       static_cast<const runtime::he::he_seal::SealCiphertextWrapper*>(input);
   m_decryptor->decrypt(seal_input->m_ciphertext, seal_output->get_plaintext());
   output->set_complex_packing(input->complex_packing());
-  NGRAPH_ASSERT(output->complex_packing() == input->complex_packing());
+  NGRAPH_CHECK(output->complex_packing() == input->complex_packing());
 }
