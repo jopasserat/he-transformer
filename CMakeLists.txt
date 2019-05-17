@@ -82,7 +82,7 @@ add_library(ngraph SHARED IMPORTED)
 set_target_properties(
     ngraph
     PROPERTIES IMPORTED_LOCATION
-    ${NGRAPH_TF_LIB_DIR}/libngraph.so
+    ${NGRAPH_TF_BRIDGE_LIB_DIR}/libngraph.so
 )
 
 # HE transformer source and test directories
