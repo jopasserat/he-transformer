@@ -70,7 +70,7 @@ message("PYTHON_VENV_VERSION ${PYTHON_VENV_VERSION}")
 
 OPTION(USE_PREBUILT_TF "Skip re-compilation of Tensorflow" OFF)
 
-include(cmake/ngraph-tf.cmake)
+include(cmake/ngraph-tf-bridge.cmake)
 include(cmake/gtest.cmake)
 include(cmake/json.cmake)
 include(cmake/openmp.cmake)

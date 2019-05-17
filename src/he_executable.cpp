@@ -424,9 +424,8 @@ void runtime::he::HEExecutable::handle_message(
 vector<runtime::PerformanceCounter>
 runtime::he::HEExecutable::get_performance_data() const {
   vector<runtime::PerformanceCounter> rc;
-  for (const pair<const Node*, stopwatch> p : m_timer_map) {
-    rc.emplace_back(p.first->get_name().c_str(),
-                    p.second.get_total_microseconds(),
+  for (const pair<shared_ptr<const Node>, stopwatch> p : m_timer_map) {
+    rc.emplace_back(p.first, p.second.get_total_microseconds(),
                     p.second.get_call_count());
   }
   return rc;
@@ -536,7 +535,7 @@ bool runtime::he::HEExecutable::call(
 
   // for each ordered op in the graph
   for (const NodeWrapper& wrapped : m_wrapped_nodes) {
-    const Node* op = &wrapped.get_node();
+    auto op = wrapped.get_node();
     auto type_id = wrapped.get_typeid();
 
     NGRAPH_INFO << "\033[1;32m"
@@ -554,9 +553,9 @@ bool runtime::he::HEExecutable::call(
 
     // get op inputs from map
     vector<shared_ptr<runtime::he::HETensor>> op_inputs;
-    for (const descriptor::Input& input : op->get_inputs()) {
-      descriptor::Tensor* tv = input.get_output().get_tensor_ptr().get();
-      op_inputs.push_back(tensor_map.at(tv));
+    for (auto input : op->inputs()) {
+      descriptor::Tensor* tensor = &input.get_tensor();
+      op_inputs.push_back(tensor_map.at(tensor));
     }
 
     if (m_enable_client && type_id == OP_TYPEID::Result) {
@@ -568,13 +567,13 @@ bool runtime::he::HEExecutable::call(
     // get op outputs from map or create
     vector<shared_ptr<runtime::he::HETensor>> op_outputs;
     for (size_t i = 0; i < op->get_output_size(); ++i) {
-      descriptor::Tensor* tv = op->get_output_tensor_ptr(i).get();
-      auto it = tensor_map.find(tv);
+      descriptor::Tensor* tensor = &op->output(i).get_tensor();
+      auto it = tensor_map.find(tensor);
       if (it == tensor_map.end()) {
         // The output tensor is not in the tensor map so create a new tensor
         const Shape& shape = op->get_output_shape(i);
         const element::Type& element_type = op->get_output_element_type(i);
-        string name = op->get_output_tensor(i).get_name();
+        string name = op->output(i).get_tensor().get_name();
 
         // Plaintext output only if all inputs are plaintext
         bool plain_out = all_of(
@@ -586,23 +585,24 @@ bool runtime::he::HEExecutable::call(
           plain_out = !m_encrypt_model;
         }
 
-        bool batched_out = any_of(op_inputs.begin(), op_inputs.end(),
-                                  [](shared_ptr<runtime::he::HETensor> he_tv) {
-                                    return he_tv->is_batched();
-                                  });
+        bool batched_out =
+            any_of(op_inputs.begin(), op_inputs.end(),
+                   [](shared_ptr<runtime::he::HETensor> he_tensor) {
+                     return he_tensor->is_batched();
+                   });
         if (plain_out) {
-          auto otv = make_shared<runtime::he::HEPlainTensor>(
+          auto out_tensor = make_shared<runtime::he::HEPlainTensor>(
               element_type, shape, m_he_backend,
               m_he_backend->create_empty_plaintext(), batched_out, name);
-          tensor_map.insert({tv, otv});
+          tensor_map.insert({tensor, out_tensor});
         } else {
-          auto otv = make_shared<runtime::he::HECipherTensor>(
+          auto out_tensor = make_shared<runtime::he::HECipherTensor>(
               element_type, shape, m_he_backend,
               m_he_backend->create_empty_ciphertext(), batched_out, name);
-          tensor_map.insert({tv, otv});
+          tensor_map.insert({tensor, out_tensor});
         }
       }
-      op_outputs.push_back(tensor_map.at(tv));
+      op_outputs.push_back(tensor_map.at(tensor));
     }
 
     // get op type
@@ -673,7 +673,7 @@ void runtime::he::HEExecutable::generate_calls(
     const element::Type& type, const NodeWrapper& node_wrapper,
     const vector<shared_ptr<HETensor>>& out,
     const vector<shared_ptr<HETensor>>& args) {
-  const Node& node = node_wrapper.get_node();
+  const Node& node = *node_wrapper.get_node();
   string node_op = node.description();
   shared_ptr<HECipherTensor> arg0_cipher = nullptr;
   shared_ptr<HEPlainTensor> arg0_plain = nullptr;
@@ -1428,6 +1428,7 @@ void runtime::he::HEExecutable::generate_calls(
     case OP_TYPEID::Asin:
     case OP_TYPEID::Atan:
     case OP_TYPEID::AvgPoolBackprop:
+    case OP_TYPEID::BatchMatMul:
     case OP_TYPEID::BatchNormTraining:
     case OP_TYPEID::BatchNormTrainingBackprop:
     case OP_TYPEID::BroadcastDistributed:
@@ -1448,6 +1449,8 @@ void runtime::he::HEExecutable::generate_calls(
     case OP_TYPEID::Erf:
     case OP_TYPEID::Exp:
     case OP_TYPEID::Floor:
+    case OP_TYPEID::Gather:
+    case OP_TYPEID::GatherND:
     case OP_TYPEID::GenerateMask:
     case OP_TYPEID::GetOutputElement:
     case OP_TYPEID::Greater:

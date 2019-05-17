@@ -86,7 +86,7 @@ include_directories(SYSTEM
 link_directories(
     ${NGRAPH_LIB_DIR}
     ${EXTERNAL_INSTALL_LIB_DIR}
-    ${NGRAPH_TF_LIB_DIR}
+    ${NGRAPH_TF_BRIDGE_LIB_DIR}
 )
 
 target_include_directories(unit-test PRIVATE ".")
@@ -101,14 +101,14 @@ add_library(ngraph_test_util STATIC IMPORTED)
 set_target_properties(
     ngraph_test_util
     PROPERTIES IMPORTED_LOCATION
-    ${NGRAPH_TF_LIB_DIR}/${CMAKE_STATIC_LIBRARY_PREFIX}ngraph_test_util${CMAKE_STATIC_LIBRARY_SUFFIX}
+    ${NGRAPH_TF_BRIDGE_LIB_DIR}/${CMAKE_STATIC_LIBRARY_PREFIX}ngraph_test_util${CMAKE_STATIC_LIBRARY_SUFFIX}
 )
 
 target_link_libraries(unit-test libgtest ngraph)
 target_link_libraries(unit-test ngraph_test_util ${CMAKE_DL_LIBS})
 target_link_libraries(unit-test he_backend seal pthread )
 
-add_dependencies(unit-test he_backend ext_seal ext_ngraph_tf ext_gtest)
+add_dependencies(unit-test he_backend ext_seal ext_ngraph_tf_bridge ext_gtest)
 
 # Cryptonets
 set (CRYPTONETS_SRC test_cryptonets.cpp test_util.cpp main_cryptonets.cpp)
@@ -118,23 +118,23 @@ include_directories(SYSTEM
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${HE_TRANSFORMER_SOURCE_DIR}
     ${EXTERNAL_INSTALL_INCLUDE_DIR}
-    ${NGRAPH_TF_INCLUDE_DIR}
+    ${NGRAPH_TF_BRIDGE_INCLUDE_DIR}
     ${NGRAPH_TEST_UTIL_INCLUDE_DIR}
 )
 
-message("Linking with NGRAPH_TF_LIB_DIR ${NGRAPH_TF_LIB_DIR}")
+message("Linking with NGRAPH_TF_BRIDGE_LIB_DIR ${NGRAPH_TF_BRIDGE_LIB_DIR}")
 
 link_directories(
     ${NGRAPH_LIB_DIR}
     ${EXTERNAL_INSTALL_LIB_DIR}
-    ${NGRAPH_TF_LIB_DIR}
+    ${NGRAPH_TF_BRIDGE_LIB_DIR}
 )
 
 target_include_directories(cryptonets_benchmark PRIVATE ".")
 
 target_link_libraries(cryptonets_benchmark libgtest ngraph ngraph_test_util)
 target_link_libraries(cryptonets_benchmark he_backend seal pthread ${CMAKE_DL_LIBS})
-add_dependencies(cryptonets_benchmark he_backend ext_seal ext_ngraph_tf ext_gtest)
+add_dependencies(cryptonets_benchmark he_backend ext_seal ext_ngraph_tf_bridge ext_gtest)
 
 # Client / server demo
 add_subdirectory(client_server)
